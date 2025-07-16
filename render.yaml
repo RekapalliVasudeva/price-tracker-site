@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: price-tracker-backend
+    env: python
+    buildCommand: ""
+    startCommand: python telegram_auth_backend.py
+    envVars:
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: serviceAccountKey.json
+    autoDeploy: true
