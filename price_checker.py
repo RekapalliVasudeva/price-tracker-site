@@ -3,9 +3,10 @@ from bs4 import BeautifulSoup
 import firebase_admin
 from firebase_admin import credentials, firestore
 import time
-
+import os
 # ✅ Telegram Bot Info
-TELEGRAM_BOT_TOKEN = "8169575352:AAFIk2ip4GSAQKFlISa90DeT492y2LuIbas"
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR-BOT-TOKEN-HERE")
+
 
 # ✅ Firebase Initialization
 if not firebase_admin._apps:
