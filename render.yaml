@@ -2,9 +2,19 @@ services:
   - type: web
     name: price-tracker-backend
     env: python
-    buildCommand: ""
-    startCommand: python telegram_auth_backend.py
+    startCommand: gunicorn telegram_auth_backend:app
     envVars:
       - key: GOOGLE_APPLICATION_CREDENTIALS
         value: serviceAccountKey.json
-    autoDeploy: true
+      - key: TELEGRAM_BOT_TOKEN
+        value: YOUR_TELEGRAM_BOT_TOKEN
+
+  - type: worker
+    name: price-checker
+    env: python
+    startCommand: python price_checker.py
+    envVars:
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        value: serviceAccountKey.json
+      - key: TELEGRAM_BOT_TOKEN
+        value: YOUR_TELEGRAM_BOT_TOKEN
