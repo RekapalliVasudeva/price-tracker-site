@@ -6,7 +6,16 @@ import time
 import os
 # ✅ Telegram Bot Info
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR-BOT-TOKEN-HERE")
+if os.environ.get("FIREBASE_CREDENTIALS"):
+    with open("serviceAccountKey.json", "w") as f:
+        f.write(os.environ["FIREBASE_CREDENTIALS"])
 
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+if not firebase_admin._apps:
+    cred = credentials.Certificate("serviceAccountKey.json")
+    firebase_admin.initialize_app(cred)
 
 # ✅ Firebase Initialization
 if not firebase_admin._apps:
