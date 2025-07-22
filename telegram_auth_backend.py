@@ -1,17 +1,25 @@
 from flask import Flask, request, jsonify, redirect
 import requests
+import os
+
+# Write FIREBASE_CREDENTIALS env variable to file if it exists
+if os.environ.get("FIREBASE_CREDENTIALS"):
+    with open("serviceAccountKey.json", "w") as f:
+        f.write(os.environ["FIREBASE_CREDENTIALS"])
+
 import firebase_admin
 from firebase_admin import credentials, firestore
-import os
 
 app = Flask(__name__)
 
-FIREBASE_CERT_PATH = "serviceAccountKey.json"
+# Environment variables
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "YOUR-BOT-TOKEN-HERE")
 
+# Firebase initialization
 if not firebase_admin._apps:
-    cred = credentials.Certificate(FIREBASE_CERT_PATH)
+    cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred)
+
 db = firestore.client()
 
 @app.route("/webhook", methods=["POST"])
@@ -24,9 +32,9 @@ def telegram_webhook():
             message_text = data["message"].get("text", "")
 
             if message_text.strip().lower() in ["/start", "hi", "hello"]:
-                reply_text = "👋 Hello!\nPaste your Telegram ID in the website to receive product alerts."
+                reply_text = f"👋 Hello!\nYour Chat ID is: {chat_id}\nPaste this Chat ID in the website to receive product alerts."
             else:
-                reply_text = f"📩 You said: {message_text}"
+                reply_text = f"📩 You said: {message_text}\nYour Chat ID is: {chat_id}"
 
             requests.post(
                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
@@ -48,6 +56,7 @@ def save_telegram_id():
     email = data.get("email")
     if not telegram_id or not email:
         return jsonify({"error": "Missing fields"}), 400
+    
     db.collection("users").document(email).set({"telegram_id": telegram_id}, merge=True)
     return jsonify({"status": "saved"})
 
@@ -74,6 +83,10 @@ def track_price():
         "last_checked_price": None
     })
     return jsonify({"success": True, "message": "Tracking started"})
+
+@app.route("/health")
+def health_check():
+    return jsonify({"status": "healthy", "service": "price-tracker-backend"})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')
