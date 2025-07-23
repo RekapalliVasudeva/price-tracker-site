@@ -9,14 +9,3 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         value: TELEGRAM_BOT_TOKEN
     autoDeploy: true
-
-  - type: worker
-    name: price-checker
-    env: python
-    startCommand: python price_checker.py
-    envVars:
-      - key: FIREBASE_CREDENTIALS
-        value: FIREBASE_CREDENTIALS
-      - key: TELEGRAM_BOT_TOKEN
-        value: TELEGRAM_BOT_TOKEN
-    autoDeploy: true
