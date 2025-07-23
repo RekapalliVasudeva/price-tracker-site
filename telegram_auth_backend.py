@@ -27,14 +27,8 @@ def home():
     """Root endpoint to avoid 404 errors"""
     return jsonify({
         "message": "Price Tracker API is running!",
-        "endpoints": {
-            "webhook": "/webhook",
-            "save_telegram_id": "/save-telegram-id",
-            "track_price": "/track-price",
-            "telegram_login": "/telegram-login",
-            "health": "/health"
-        },
-        "status": "healthy"
+        "status": "healthy",
+        "endpoints": ["/webhook", "/save-telegram-id", "/track-price", "/health"]
     }), 200
 
 @app.route("/webhook", methods=["POST"])
@@ -87,12 +81,6 @@ def save_telegram_id():
         if not telegram_id or not email:
             return jsonify({"error": "Missing telegram_id or email"}), 400
         
-        # Validate telegram_id is numeric
-        try:
-            int(telegram_id)
-        except ValueError:
-            return jsonify({"error": "Invalid Telegram ID format"}), 400
-        
         db.collection("users").document(email).set({
             "telegram_id": str(telegram_id),
             "email": email,
@@ -115,14 +103,7 @@ def track_price():
         email = data.get("email")
 
         if not url or not alert_price or not email:
-            return jsonify({"error": "Missing required fields: product_url, alert_price, email"}), 400
-
-        # Validate URL
-        if not (url.startswith('http://') or url.startswith('https://')):
-            return jsonify({"error": "Invalid URL format"}), 400
-            
-        if not ('flipkart.com' in url.lower() or 'amazon.in' in url.lower() or 'amazon.com' in url.lower()):
-            return jsonify({"error": "Only Flipkart and Amazon URLs are supported"}), 400
+            return jsonify({"error": "Missing required fields"}), 400
 
         # Get user's telegram ID
         user_doc = db.collection("users").document(email).get()
@@ -130,9 +111,7 @@ def track_price():
             return jsonify({"error": "User not found. Please save your Telegram ID first."}), 404
 
         telegram_id = user_doc.to_dict().get("telegram_id")
-        if not telegram_id:
-            return jsonify({"error": "Telegram ID not found for this email"}), 404
-
+        
         # Save tracking info
         tracking_data = {
             "email": email,
@@ -155,11 +134,7 @@ def track_price():
 
 @app.route("/health")
 def health_check():
-    return jsonify({
-        "status": "healthy", 
-        "service": "price-tracker-backend",
-        "timestamp": firestore.SERVER_TIMESTAMP
-    })
+    return jsonify({"status": "healthy", "service": "price-tracker-backend"})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host='0.0.0.0')
