@@ -31,8 +31,14 @@
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
       max-width: 500px;
       text-align: center;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px); /* Safari support */
+      -webkit-backdrop-filter: blur(10px); /* Safari 9+ support */
+      backdrop-filter: blur(10px); /* Modern browsers */
+    }
+
+    .section-header {
+      margin-top: 2rem;
+      font-weight: bold;
+      color: #2c3e50;
     }
 
     input, button {
@@ -136,33 +142,32 @@
 <body>
   <header>Price Tracker 🔔</header>
   <div class="container">
-    <p style="margin-top:2rem">🔗 Get Your Telegram Chat ID</p>
+    <p class="section-header">🔗 Get Your Telegram Chat ID</p>
     <button onclick="loginWithTelegram()">Open Telegram Bot</button>
-    
     <button class="quick-fill" onclick="quickFillYourId()">Quick Fill My ID (5313147500)</button>
-    
-    <p style="margin-top:2rem">Paste product URL:</p>
-    <input type="url" id="productUrl" placeholder="https://www.flipkart.com/... or https://www.amazon.in/..." autocomplete="url" />
-    
-    <p>Set your alert price (₹):</p>
-    <input type="number" id="targetPrice" placeholder="2500" min="1" autocomplete="off" />
-    
-    <input type="email" id="email" placeholder="Enter your email to link alerts" autocomplete="email" />
-    <input type="text" id="telegramId" placeholder="Your Telegram Chat ID" autocomplete="off" />
+
+    <p class="section-header">Paste product URL:</p>
+    <input type="url" id="productUrl" placeholder="https://www.flipkart.com/... or https://www.amazon.in/..." autocomplete="url" required />
+
+    <p class="section-header">Set your alert price (₹):</p>
+    <input type="number" id="targetPrice" placeholder="2500" min="1" autocomplete="off" required />
+
+    <input type="email" id="email" placeholder="Enter your email to link alerts" autocomplete="email" required />
+    <input type="text" id="telegramId" placeholder="Your Telegram Chat ID" autocomplete="off" required />
     
     <div class="button-row">
-      <button id="instantCheckBtn" class="instant-check-btn" onclick="instantPriceCheck()">
+      <button id="instantCheckBtn" class="instant-check-btn" onclick="instantPriceCheck()" type="button">
         📊 Check Price Now
       </button>
-      <button id="submitBtn" onclick="submitAlert()">
+      <button id="submitBtn" onclick="submitAlert()" type="button">
         🎯 Set Price Alert
       </button>
     </div>
-    
+
     <div class="loading" id="loading">
       ⏳ Processing your request...
     </div>
-    
+
     <div class="status-message" id="statusMessage"></div>
     
     <div class="gif-container">
@@ -241,18 +246,14 @@
           body: JSON.stringify({ product_url: url })
         });
 
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
         const data = await response.json();
-        
         if (data.success && data.current_price) {
           showStatus(`📊 <strong>Current Price: ₹${data.current_price}</strong><br>🔗 Product: ${data.product_title || 'Unknown'}<br>🕒 Checked at: ${new Date().toLocaleString()}`);
         } else {
           throw new Error(data.message || data.error || "Could not fetch current price");
         }
-        
       } catch (error) {
         console.error('Price check error:', error);
         showStatus(`❌ <strong>Price Check Failed:</strong> ${error.message}<br>💡 Try checking the URL or try again later`, true);
@@ -273,17 +274,14 @@
         showStatus(urlError, true);
         return;
       }
-      
       if (isNaN(price) || price <= 0) {
         showStatus("Please enter a valid target price greater than 0", true);
         return;
       }
-      
       if (!validateEmail(email)) {
         showStatus("Please enter a valid email address", true);
         return;
       }
-      
       if (!telegramId || telegramId.length < 5) {
         showStatus("Please enter your Telegram Chat ID (get it from the bot above)", true);
         return;
@@ -299,9 +297,7 @@
           body: JSON.stringify({ telegram_id: telegramId, email: email })
         });
 
-        if (!telegramResponse.ok) {
-          throw new Error(`Server error: ${telegramResponse.status}`);
-        }
+        if (!telegramResponse.ok) throw new Error(`Server error: ${telegramResponse.status}`);
 
         const telegramData = await telegramResponse.json();
         if (telegramData.status !== "saved") {
@@ -319,20 +315,16 @@
           })
         });
 
-        if (!trackResponse.ok) {
-          throw new Error(`Server error: ${trackResponse.status}`);
-        }
+        if (!trackResponse.ok) throw new Error(`Server error: ${trackResponse.status}`);
 
         const trackData = await trackResponse.json();
         if (trackData.success) {
           showStatus(`✅ <strong>Price alert set successfully!</strong><br>📧 Email: ${email}<br>💰 Target Price: ₹${price}<br>🔔 You'll be notified via Telegram when the price drops!`);
-          // Clear form except email and telegram ID
           document.getElementById("productUrl").value = "";
           document.getElementById("targetPrice").value = "";
         } else {
           throw new Error(trackData.message || trackData.error || "Failed to set price alert");
         }
-        
       } catch (error) {
         console.error('Submit error:', error);
         showStatus(`❌ <strong>Error:</strong> ${error.message}<br>💡 Please check your internet connection and try again`, true);
