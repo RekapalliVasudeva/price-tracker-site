@@ -32,6 +32,7 @@
       max-width: 500px;
       text-align: center;
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px); /* safari support */
     }
 
     input, button {
@@ -116,33 +117,24 @@
   <div class="container">
     <p style="margin-top:2rem">🔗 Get Your Telegram Chat ID</p>
     <button onclick="loginWithTelegram()">Open Telegram Bot</button>
-    
     <!-- Quick fill button for your convenience -->
     <button class="quick-fill" onclick="quickFillYourId()">Quick Fill My ID (5313147500)</button>
-    
     <p style="margin-top:2rem">Paste product URL:</p>
     <input type="text" id="productUrl" placeholder="https://www.flipkart.com/... or https://www.amazon.in/..." />
-    
     <p>Set your alert price (₹):</p>
     <input type="number" id="targetPrice" placeholder="2500" min="1"/>
-    
     <input type="email" id="email" placeholder="Enter your email to link alerts" />
     <input type="text" id="telegramId" placeholder="Your Telegram Chat ID" />
-    
     <button id="submitBtn" onclick="submitAlert()">🎯 Set Price Alert</button>
-    
     <div class="loading" id="loading">
       ⏳ Setting up your price alert...
     </div>
-    
     <div class="status-message" id="statusMessage"></div>
-    
     <div class="gif-container">
       <img src="https://via.placeholder.com/100x100/00bcd4/ffffff?text=Shop" alt="AI Shopping"/>
       <img src="https://via.placeholder.com/100x100/ec407a/ffffff?text=Cart" alt="Cart Flow"/>
     </div>
   </div>
-
   <script>
     const BACKEND_URL = "https://price-tracker-site-4.onrender.com";
 
@@ -164,7 +156,6 @@
       statusDiv.textContent = message;
       statusDiv.className = `status-message ${isError ? 'error' : 'success'}`;
       statusDiv.style.display = 'block';
-      
       setTimeout(() => {
         statusDiv.style.display = 'none';
       }, 5000);
@@ -173,7 +164,6 @@
     function setLoading(loading) {
       const loadingDiv = document.getElementById('loading');
       const submitBtn = document.getElementById('submitBtn');
-      
       loadingDiv.style.display = loading ? 'block' : 'none';
       submitBtn.disabled = loading;
     }
@@ -189,22 +179,18 @@
         showStatus("Please enter a valid product URL starting with http:// or https://", true);
         return;
       }
-      
       if (!url.includes('flipkart.com') && !url.includes('amazon.in') && !url.includes('amazon.com')) {
         showStatus("Currently only Flipkart and Amazon India URLs are supported", true);
         return;
       }
-      
       if (isNaN(price) || price <= 0) {
         showStatus("Please enter a valid target price greater than 0", true);
         return;
       }
-      
       if (!validateEmail(email)) {
         showStatus("Please enter a valid email address", true);
         return;
       }
-      
       if (!telegramId || telegramId.length < 5) {
         showStatus("Please enter your Telegram Chat ID", true);
         return;
@@ -221,7 +207,6 @@
         });
 
         const telegramData = await telegramResponse.json();
-        
         if (telegramData.status !== "saved") {
           throw new Error("Failed to save Telegram ID: " + (telegramData.error || "Unknown error"));
         }
@@ -238,7 +223,6 @@
         });
 
         const trackData = await trackResponse.json();
-        
         if (trackData.success) {
           showStatus(`✅ Price alert set successfully! You'll be notified when the price drops to ₹${price} or below.`);
           // Clear form except email and telegram ID
@@ -247,7 +231,6 @@
         } else {
           throw new Error(trackData.message || trackData.error || "Failed to set price alert");
         }
-        
       } catch (error) {
         console.error('Error:', error);
         showStatus("❌ Error: " + error.message, true);
