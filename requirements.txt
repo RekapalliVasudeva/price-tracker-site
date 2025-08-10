@@ -4,3 +4,7 @@ firebase-admin
 requests
 beautifulsoup4
 gunicorn
+python-dotenv
+apscheduler
+playwright    # optional: required only if USE_PLAYWRIGHT=true
+lxml
