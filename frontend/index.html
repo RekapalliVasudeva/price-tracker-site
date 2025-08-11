@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Price Tracker - Flipkart & Amazon</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* your CSS kept similar */
+    body { margin:0; font-family: 'Roboto', sans-serif; background:linear-gradient(135deg,#e0f7fa,#fce4ec); display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .container { background:#ffffffcc; padding:2rem; border-radius:1rem; box-shadow:0 8px 20px rgba(0,0,0,0.12); max-width:720px; width:100%; }
+    header{ font-size:1.6rem; font-weight:700; margin-bottom:1rem; color:#2c3e50 }
+    input, button { padding:0.7rem; border-radius:8px; border:1px solid #ccc; font-size:1rem; width:100%; box-sizing:border-box }
+    .button-row { display:flex; gap:8px; margin-top:0.8rem }
+    .button-row button { flex:1 }
+    .status { margin-top:1rem; display:none; padding:0.6rem; border-radius:8px }
+    .success{ background:#d4edda; color:#155724 }
+    .error{ background:#f8d7da; color:#721c24 }
+    canvas { max-width:100%; height:300px; margin-top:1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>Price Tracker 🔔</header>
+
+    <label>Paste product URL (Flipkart / Amazon)</label>
+    <input id="productUrl" placeholder="https://www.flipkart.com/... or https://www.amazon.in/..." />
+
+    <label style="margin-top:0.7rem">Set alert price (₹)</label>
+    <input id="targetPrice" type="number" placeholder="Enter target price" />
+
+    <label style="margin-top:0.7rem">Your email (for alerts)</label>
+    <input id="email" type="email" placeholder="you@example.com" />
+
+    <label style="margin-top:0.7rem">Your Telegram Chat ID</label>
+    <input id="telegramId" placeholder="Press 'Open Telegram Bot' then copy your chat id" />
+
+    <div class="button-row">
+      <button onclick="openBot()">Open Telegram Bot</button>
+      <button onclick="quickFill()" style="background:linear-gradient(45deg,#4CAF50,#45a049); color:#fff">Quick Fill (demo)</button>
+    </div>
+
+    <div class="button-row" style="margin-top:0.6rem">
+      <button onclick="instantCheck()" style="background:linear-gradient(45deg,#FF9800,#F57C00); color:#fff">Check Price Now</button>
+      <button onclick="setAlert()" style="background:linear-gradient(45deg,#00bcd4,#ec407a); color:#fff">Set Price Alert</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div style="display:flex; gap:8px; margin-top:0.8rem;">
+      <button onclick="showHistory()" style="flex:1">View Price History</button>
+      <button onclick="openMyAlerts()" style="flex:1">My Alerts</button>
+    </div>
+
+    <canvas id="chartCanvas" style="display:none"></canvas>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const BACKEND_URL = "{{BACKEND_URL}}" || "https://price-tracker-site-4.onrender.com"; // replace in Render or set via env
+
+  function showStatus(msg, isError=false) {
+    const s = document.getElementById('status');
+    s.innerHTML = msg;
+    s.className = 'status ' + (isError ? 'error' : 'success');
+    s.style.display = 'block';
+    setTimeout(()=> s.style.display='none', 8000);
+  }
+
+  function openBot() {
+    window.open('https://t.me/pricealert_ai_bot', '_blank')
+  }
+
+  function quickFill() {
+    document.getElementById('telegramId').value = '5313147500';
+    showStatus('Chat ID quick-filled (demo)');
+  }
+
+  async function instantCheck() {
+    const url = document.getElementById('productUrl').value.trim();
+    if (!url) return showStatus('Enter product url', true);
+    showStatus('Checking price...');
+    try {
+      const res = await fetch(BACKEND_URL + '/check-price-now', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({product_url: url})
+      });
+      const data = await res.json();
+      if (data.success) {
+        showStatus('Current Price: ₹' + data.current_price + ' — ' + (data.product_title || ''));
+      } else {
+        showStatus('Error: ' + (data.error || 'failed'), true);
+      }
+    } catch (e) {
+      showStatus('Network error', true);
+      console.error(e);
+    }
+  }
+
+  async function setAlert() {
+    const url = document.getElementById('productUrl').value.trim();
+    const price = parseFloat(document.getElementById('targetPrice').value);
+    const email = document.getElementById('email').value.trim();
+    const telegramId = document.getElementById('telegramId').value.trim();
+    if (!url || !price || !email || !telegramId) return showStatus('All fields required', true);
+
+    showStatus('Saving your Telegram ID...');
+    // save telegram id
+    try {
+      const r1 = await fetch(BACKEND_URL + '/save-telegram-id', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({telegram_id: telegramId, email})
+      });
+      const j1 = await r1.json();
+      if (j1.error) return showStatus('Error saving telegram id: '+j1.error, true);
+    } catch (e) {
+      return showStatus('Network error saving telegram id', true);
+    }
+
+    // track price
+    try {
+      const r2 = await fetch(BACKEND_URL + '/track-price', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({product_url: url, alert_price: price, email})
+      });
+      const j2 = await r2.json();
+      if (j2.success) {
+        showStatus('✅ Price alert set. You will be notified via Telegram and Email.');
+        // clear form
+        document.getElementById('productUrl').value = '';
+        document.getElementById('targetPrice').value = '';
+      } else {
+        showStatus('Error: ' + (j2.error || j2.message || 'failed'), true);
+      }
+    } catch (e) {
+      showStatus('Network error setting alert', true);
+    }
+  }
+
+  async function showHistory() {
+    const url = document.getElementById('productUrl').value.trim();
+    if (!url) return showStatus('Enter product URL to view history', true);
+    // Fetch price history by product_url
+    try {
+      const res = await fetch(BACKEND_URL + '/product-history?product_url=' + encodeURIComponent(url));
+      const j = await res.json();
+      if (!j.success) return showStatus('No history found', true);
+      const points = j.data;
+      if (!points || !points.length) return showStatus('No history points', true);
+      // prepare dataset
+      const labels = points.map(p => new Date(p.timestamp));
+      const values = points.map(p => p.price);
+      renderChart(labels, values);
+    } catch (e) {
+      console.error(e);
+      showStatus('Error fetching history', true);
+    }
+  }
+
+  let chartInstance = null;
+  function renderChart(labels, data) {
+    const canvas = document.getElementById('chartCanvas');
+    canvas.style.display = 'block';
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels.map(d => new Date(d).toLocaleString()),
+        datasets: [{
+          label: 'Price (INR)',
+          data: data,
+          fill: false,
+          tension: 0.2,
+          pointRadius: 3,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { display: true },
+          y: { beginAtZero: false }
+        },
+        plugins: {
+          tooltip: { mode: 'index', intersect: false }
+        }
+      }
+    });
+  }
+
+  function openMyAlerts(){
+    // TODO: implement user alerts page (requires auth)
+    alert('My Alerts feature coming soon — you will be able to list & cancel alerts.');
+  }
+</script>
+</body>
+</html>
