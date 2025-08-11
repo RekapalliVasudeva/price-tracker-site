@@ -1,0 +1,13 @@
+# Ignore environment files
+.env
+.env.*
+
+# Ignore Firebase credentials
+backend/firebase_config.json
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore Docker-related junk
+*.log
