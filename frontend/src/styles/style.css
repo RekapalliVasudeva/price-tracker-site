@@ -1,0 +1,61 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+}
+
+.app-container {
+  text-align: center;
+  padding: 20px;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.2rem;
+}
+
+header p {
+  opacity: 0.8;
+}
+
+.checker-container {
+  margin-top: 2rem;
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.checker-container input {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  width: 250px;
+  margin-right: 10px;
+  outline: none;
+}
+
+.checker-container button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  background: #ff6b6b;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.checker-container button:hover {
+  background: #ff4b4b;
+}
+
+.price-output {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  background: rgba(255,255,255,0.15);
+  padding: 10px;
+  border-radius: 10px;
+}
